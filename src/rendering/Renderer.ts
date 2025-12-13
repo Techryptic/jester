@@ -45,29 +45,39 @@ export class Renderer {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Check if webcam-only mode is active
+    const activeTemplate = boardState.templates.find(t => t.visible);
+    const isWebcamOnly = activeTemplate?.id === 'webcam';
+
     // Draw mirrored video as background
-    this.drawVideo();
+    this.drawVideo(isWebcamOnly);
 
     // Draw whiteboard content (templates + strokes) with camera transform
-    this.drawWhiteboardContent(boardState, camera);
+    this.drawWhiteboardContent(boardState, camera, config.backgroundOpacity);
 
     // Draw debug overlays (on top, in screen space)
     if (config.debug.showLandmarks || config.debug.showGestureState || config.debug.showFPS) {
       this.drawDebugOverlay(hands, gestureState, camera, config);
     }
 
-    // Draw erase cursor if erasing
-    if (gestureState.currentGesture === 'ERASING' && gestureState.lastLeftPalmPos) {
-      this.drawEraseCursor(gestureState.lastLeftPalmPos, config.gesture.eraseRadius);
+    // Draw erase cursor if erasing (swap palm position for left-handed mode)
+    const erasePalmPos = config.gesture.leftHandedMode 
+      ? gestureState.lastRightPalmPos 
+      : gestureState.lastLeftPalmPos;
+    if (gestureState.currentGesture === 'ERASING' && erasePalmPos) {
+      this.drawEraseCursor(erasePalmPos, config.gesture.eraseRadius);
     }
 
-    // Draw draw cursor if drawing
-    if (gestureState.currentGesture === 'DRAWING' && gestureState.lastRightPinchPos) {
-      this.drawDrawCursor(gestureState.lastRightPinchPos, config.pen.thickness, config.pen.color);
+    // Draw draw cursor if drawing (swap pinch position for left-handed mode)
+    const drawPinchPos = config.gesture.leftHandedMode 
+      ? gestureState.lastLeftPinchPos 
+      : gestureState.lastRightPinchPos;
+    if (gestureState.currentGesture === 'DRAWING' && drawPinchPos) {
+      this.drawDrawCursor(drawPinchPos, config.pen.thickness, config.pen.color);
     }
   }
 
-  private drawVideo(): void {
+  private drawVideo(isWebcamOnly: boolean = false): void {
     const { ctx, canvas, videoElement } = this;
 
     if (videoElement.readyState < 2) return;
@@ -78,13 +88,14 @@ export class Renderer {
     ctx.scale(-1, 1);
 
     // Draw video scaled to fit canvas
-    ctx.globalAlpha = 0.3; // Semi-transparent background
+    // Full opacity for webcam-only mode, semi-transparent for whiteboard mode
+    ctx.globalAlpha = isWebcamOnly ? 1.0 : 0.3;
     ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
     ctx.globalAlpha = 1;
     ctx.restore();
   }
 
-  private drawWhiteboardContent(boardState: BoardState, camera: Camera): void {
+  private drawWhiteboardContent(boardState: BoardState, camera: Camera, backgroundOpacity: number): void {
     const { ctx, canvas } = this;
 
     ctx.save();
@@ -96,7 +107,7 @@ export class Renderer {
     ctx.translate(-camera.x, -camera.y);
 
     // Draw templates
-    this.drawTemplates(boardState.templates);
+    this.drawTemplates(boardState.templates, backgroundOpacity);
 
     // Draw strokes
     this.drawStrokes(boardState.strokes);
@@ -104,32 +115,46 @@ export class Renderer {
     ctx.restore();
   }
 
-  private drawTemplates(templates: TemplateLayer[]): void {
+  private drawTemplates(templates: TemplateLayer[], backgroundOpacity: number): void {
     const { ctx, canvas } = this;
-    const camera = { x: 0, y: 0, zoom: 1 }; // Templates are drawn in world space
 
     for (const template of templates) {
       if (!template.visible) continue;
 
       switch (template.type) {
         case 'grid':
+          this.drawBlankBackground(backgroundOpacity);
           this.drawGrid(template);
           break;
         case 'dots':
+          this.drawBlankBackground(backgroundOpacity);
           this.drawDots(template);
           break;
         case 'lines':
+          this.drawBlankBackground(backgroundOpacity);
           this.drawLines(template);
           break;
         case 'image':
-          // Blank template - just draw a white background in world space
-          if (template.id === 'blank') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.fillRect(-canvas.width * 5, -canvas.height * 5, canvas.width * 10, canvas.height * 10);
+          // Webcam-only template - no background drawn, just pure webcam
+          if (template.id === 'webcam') {
+            // Do nothing - let webcam video show through
+          }
+          // Blank template - draw a white background in world space
+          else if (template.id === 'blank') {
+            this.drawBlankBackground(backgroundOpacity);
           }
           break;
       }
     }
+  }
+
+  private drawBlankBackground(opacity: number): void {
+    // Skip drawing if opacity is 0 (fully transparent)
+    if (opacity <= 0) return;
+    
+    const { ctx, canvas } = this;
+    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    ctx.fillRect(-canvas.width * 5, -canvas.height * 5, canvas.width * 10, canvas.height * 10);
   }
 
   private drawGrid(template: TemplateLayer): void {

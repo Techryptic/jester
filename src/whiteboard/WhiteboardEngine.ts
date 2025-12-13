@@ -33,6 +33,13 @@ export class WhiteboardEngine {
   private createDefaultTemplates(): TemplateLayer[] {
     return [
       {
+        id: 'webcam',
+        name: 'Webcam Only',
+        type: 'image',
+        visible: false,
+        transform: { x: 0, y: 0, scale: 1, rotation: 0 },
+      },
+      {
         id: 'blank',
         name: 'Blank',
         type: 'image',

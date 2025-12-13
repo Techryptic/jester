@@ -65,7 +65,8 @@ export class UIManager {
         <section class="control-section">
           <h4>Background</h4>
           <select id="template-select">
-            <option value="blank">Blank</option>
+            <option value="webcam">📹 Webcam Only</option>
+            <option value="blank" selected>Blank (White)</option>
             <option value="grid">Grid</option>
             <option value="dots">Dot Grid</option>
             <option value="lines">Lined</option>
@@ -106,6 +107,14 @@ export class UIManager {
         <section class="control-section collapsible">
           <h4 class="collapsible-header">⚙️ Advanced Tuning</h4>
           <div class="collapsible-content" style="display: none;">
+            <label class="toggle-label" style="margin-bottom: 12px; padding: 8px; background: rgba(74, 144, 217, 0.2); border-radius: 4px;">
+              <input type="checkbox" id="left-handed-mode" />
+              <span>🫲 Left-Handed Mode</span>
+            </label>
+            <div class="control-row">
+              <label>Background Opacity: <span id="bg-opacity-value">90</span>%</label>
+              <input type="range" id="bg-opacity" min="0" max="100" step="5" value="90" />
+            </div>
             <div class="control-row">
               <label>Pinch Threshold: <span id="pinch-threshold-value">0.07</span></label>
               <input type="range" id="pinch-threshold" min="0.03" max="0.15" step="0.01" value="0.07" />
@@ -208,6 +217,42 @@ export class UIManager {
     this.setupGestureSlider('#palm-threshold', 'palmOpenThreshold', '#palm-threshold-value');
     this.setupGestureSlider('#erase-radius', 'eraseRadius', '#erase-radius-value');
     this.setupGestureSlider('#smoothing', 'smoothingFactor', '#smoothing-value');
+
+    // Left-handed mode toggle
+    const leftHandedToggle = this.container.querySelector('#left-handed-mode') as HTMLInputElement;
+    const gestureHelp = this.container.querySelector('.gesture-help small');
+    leftHandedToggle?.addEventListener('change', () => {
+      this.config.gesture.leftHandedMode = leftHandedToggle.checked;
+      this.gestureEngine.updateConfig({ leftHandedMode: leftHandedToggle.checked });
+      
+      // Update gesture help text
+      if (gestureHelp) {
+        if (leftHandedToggle.checked) {
+          gestureHelp.innerHTML = `
+            <b>Left Pinch:</b> Draw<br/>
+            <b>Right Palm:</b> Erase<br/>
+            <b>Left Palm:</b> Pan<br/>
+            <b>Both Pinch:</b> Zoom
+          `;
+        } else {
+          gestureHelp.innerHTML = `
+            <b>Right Pinch:</b> Draw<br/>
+            <b>Left Palm:</b> Erase<br/>
+            <b>Right Palm:</b> Pan<br/>
+            <b>Both Pinch:</b> Zoom
+          `;
+        }
+      }
+    });
+
+    // Background opacity slider
+    const bgOpacitySlider = this.container.querySelector('#bg-opacity') as HTMLInputElement;
+    const bgOpacityValue = this.container.querySelector('#bg-opacity-value');
+    bgOpacitySlider?.addEventListener('input', () => {
+      const value = parseInt(bgOpacitySlider.value);
+      this.config.backgroundOpacity = value / 100;
+      if (bgOpacityValue) bgOpacityValue.textContent = bgOpacitySlider.value;
+    });
   }
 
   private setupDebugToggle(selector: string, configKey: keyof DebugConfig): void {

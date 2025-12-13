@@ -144,6 +144,7 @@ export type GestureConfig = {
   activationFrames: number;
   deactivationFrames: number;
   panSensitivity: number;
+  leftHandedMode: boolean;
 };
 
 export type PenConfig = {
@@ -163,6 +164,7 @@ export type AppConfig = {
   pen: PenConfig;
   debug: DebugConfig;
   gesturesEnabled: boolean;
+  backgroundOpacity: number;
 };
 
 // === Default Configurations ===
@@ -175,6 +177,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   activationFrames: 2,
   deactivationFrames: 2,
   panSensitivity: 2.0,
+  leftHandedMode: false,
 };
 
 export const DEFAULT_PEN_CONFIG: PenConfig = {
@@ -194,6 +197,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   pen: DEFAULT_PEN_CONFIG,
   debug: DEFAULT_DEBUG_CONFIG,
   gesturesEnabled: true,
+  backgroundOpacity: 0.9,
 };
 
 export const DEFAULT_CAMERA: Camera = {

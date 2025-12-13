@@ -117,9 +117,24 @@ export class GestureEngine {
     const previousGesture = this.state.currentGesture;
     let newGesture: ActiveGesture = 'IDLE';
 
+    // Left-handed mode swaps hand roles
+    // Draw hand: Right (normal) or Left (left-handed)
+    // Erase/Pan hand: Left (normal) or Right (left-handed)
+    const isLeftHanded = this.config.leftHandedMode;
+    
+    const drawPinching = isLeftHanded ? leftPinching : rightPinching;
+    const drawPinchPos = isLeftHanded ? leftPinchPos : rightPinchPos;
+    const erasePalmOpen = isLeftHanded ? rightPalmOpen : leftPalmOpen;
+    const erasePalmPos = isLeftHanded ? rightPalmPos : leftPalmPos;
+    const panPalmOpen = isLeftHanded ? leftPalmOpen : rightPalmOpen;
+    const panPalmPos = isLeftHanded ? leftPalmPos : rightPalmPos;
+    const panPinching = isLeftHanded ? leftPinching : rightPinching;
+    const lastPanPalmPos = isLeftHanded ? this.state.lastLeftPalmPos : this.state.lastRightPalmPos;
+    const lastDrawPinchPos = isLeftHanded ? this.state.lastLeftPinchPos : this.state.lastRightPinchPos;
+
     // Priority: ZOOM > DRAW > ERASE > PAN > IDLE
     if (rightPinching && leftPinching && rightPinchPos && leftPinchPos) {
-      // Two-hand zoom
+      // Two-hand zoom (works same for both modes)
       newGesture = 'ZOOMING';
       const currentDistance = this.calculateDistance(rightPinchPos, leftPinchPos);
       const center = {
@@ -134,31 +149,31 @@ export class GestureEngine {
       }
 
       this.state.lastPinchDistance = currentDistance;
-    } else if (rightPinching && rightPinchPos) {
-      // Right hand pinch = DRAW
+    } else if (drawPinching && drawPinchPos) {
+      // Draw hand pinch = DRAW
       newGesture = 'DRAWING';
 
       if (previousGesture !== 'DRAWING') {
-        this.emit({ type: 'DRAW_START', position: rightPinchPos });
+        this.emit({ type: 'DRAW_START', position: drawPinchPos });
       } else {
-        this.emit({ type: 'DRAW_MOVE', position: rightPinchPos });
+        this.emit({ type: 'DRAW_MOVE', position: drawPinchPos });
       }
-    } else if (leftPalmOpen && leftPalmPos) {
-      // Left palm open = ERASE
+    } else if (erasePalmOpen && erasePalmPos) {
+      // Erase hand palm open = ERASE
       newGesture = 'ERASING';
       this.emit({
         type: 'ERASE',
-        position: leftPalmPos,
+        position: erasePalmPos,
         radius: this.config.eraseRadius,
       });
-    } else if (rightPalmOpen && rightPalmPos && !rightPinching) {
-      // Right palm open (not pinching) = PAN
+    } else if (panPalmOpen && panPalmPos && !panPinching) {
+      // Pan hand palm open (not pinching) = PAN
       newGesture = 'PANNING';
 
-      if (this.state.lastRightPalmPos) {
+      if (lastPanPalmPos) {
         const delta = {
-          x: (rightPalmPos.x - this.state.lastRightPalmPos.x) * this.config.panSensitivity,
-          y: (rightPalmPos.y - this.state.lastRightPalmPos.y) * this.config.panSensitivity,
+          x: (panPalmPos.x - lastPanPalmPos.x) * this.config.panSensitivity,
+          y: (panPalmPos.y - lastPanPalmPos.y) * this.config.panSensitivity,
         };
         this.emit({ type: 'PAN', delta });
       }
@@ -167,8 +182,8 @@ export class GestureEngine {
     // Handle gesture transitions
     if (previousGesture === 'DRAWING' && newGesture !== 'DRAWING') {
       // Draw ended
-      if (this.state.lastRightPinchPos) {
-        this.emit({ type: 'DRAW_END', position: this.state.lastRightPinchPos });
+      if (lastDrawPinchPos) {
+        this.emit({ type: 'DRAW_END', position: lastDrawPinchPos });
       }
     }
 
