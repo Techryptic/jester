@@ -241,8 +241,17 @@ export class GestureEngine {
   private detectPinch(hand: Hand): boolean {
     const thumbTip = hand.landmarks[LANDMARK.THUMB_TIP];
     const indexTip = hand.landmarks[LANDMARK.INDEX_TIP];
-    const distance = this.calculateDistance(thumbTip, indexTip);
-    return distance < this.config.pinchThreshold;
+    
+    // Check 2D distance between thumb and index tips
+    const distance2D = this.calculateDistance(thumbTip, indexTip);
+    
+    // Check depth (Z) difference - when actually pinching, Z values are similar
+    // When wrist rotates and fingers just LOOK close, Z values differ significantly
+    const zDiff = Math.abs(thumbTip.z - indexTip.z);
+    const maxZDiff = 0.08; // Allow some Z tolerance
+    
+    // Both conditions must be met for a valid pinch
+    return distance2D < this.config.pinchThreshold && zDiff < maxZDiff;
   }
 
   private detectPalmOpen(hand: Hand): boolean {
