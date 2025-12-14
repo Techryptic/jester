@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>✏️ Draw - Gesture Whiteboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a1a2e;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: rgba(30, 30, 40, 0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    
+    .toolbar-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    #status {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    #status.connected {
+      color: #4ade80;
+    }
+    
+    #status.disconnected {
+      color: #f87171;
+    }
+    
+    .color-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.1s;
+    }
+    
+    .color-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-btn.active {
+      border-color: white;
+    }
+    
+    .thickness-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    .thickness-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .thickness-btn.active {
+      border-color: #4a90d9;
+      background: rgba(74, 144, 217, 0.3);
+    }
+    
+    #clear-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.3);
+      border: none;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    #clear-btn:hover {
+      background: rgba(239, 68, 68, 0.5);
+    }
+    
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #canvas {
+      width: 100%;
+      height: 100%;
+      background: white;
+      cursor: crosshair;
+    }
+    
+    .hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 20px;
+      color: white;
+      font-size: 14px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .hint.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar">
+      <div class="toolbar-section">
+        <span id="status" class="disconnected">● Disconnected</span>
+      </div>
+      <div class="toolbar-section">
+        <button class="color-btn active" data-color="#ff4444" style="background:#ff4444"></button>
+        <button class="color-btn" data-color="#44ff44" style="background:#44ff44"></button>
+        <button class="color-btn" data-color="#4444ff" style="background:#4444ff"></button>
+        <button class="color-btn" data-color="#ffff44" style="background:#ffff44"></button>
+        <button class="color-btn" data-color="#ff44ff" style="background:#ff44ff"></button>
+        <button class="color-btn" data-color="#000000" style="background:#000000"></button>
+      </div>
+      <div class="toolbar-section">
+        <button class="thickness-btn" data-thickness="2">S</button>
+        <button class="thickness-btn active" data-thickness="4">M</button>
+        <button class="thickness-btn" data-thickness="8">L</button>
+        <button class="thickness-btn" data-thickness="16">XL</button>
+      </div>
+      <div class="toolbar-section">
+        <button id="clear-btn">Clear</button>
+      </div>
+    </div>
+    <div id="canvas-container">
+      <canvas id="canvas"></canvas>
+      <div class="hint" id="hint">Draw here with your Apple Pencil or finger!</div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let ws = null;
+    let isConnected = false;
+    let currentColor = '#ff4444';
+    let currentThickness = 4;
+    let isDrawing = false;
+    let currentStrokeId = null;
+    let lastPoint = null;
+
+    // Elements
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+    const hintEl = document.getElementById('hint');
+    const colorBtns = document.querySelectorAll('.color-btn');
+    const thicknessBtns = document.querySelectorAll('.thickness-btn');
+    const clearBtn = document.getElementById('clear-btn');
+
+    // Setup canvas
+    function resizeCanvas() {
+      const container = document.getElementById('canvas-container');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = container.clientWidth * dpr;
+      canvas.height = container.clientHeight * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = container.clientWidth + 'px';
+      canvas.style.height = container.clientHeight + 'px';
+    }
+
+    // WebSocket connection
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}`;
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        isConnected = true;
+        statusEl.textContent = '● Connected';
+        statusEl.className = 'connected';
+        console.log('Connected to server');
+      };
+      
+      ws.onclose = () => {
+        isConnected = false;
+        statusEl.textContent = '● Disconnected';
+        statusEl.className = 'disconnected';
+        console.log('Disconnected from server');
+        // Reconnect after 2 seconds
+        setTimeout(connect, 2000);
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+      
+      ws.onmessage = (event) => {
+        // Handle incoming messages if needed
+        const message = JSON.parse(event.data);
+        if (message.type === 'clear') {
+          clearCanvas();
+        }
+      };
+    }
+
+    // Send message to server
+    function send(type, data) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type, data }));
+      }
+    }
+
+    // Generate stroke ID
+    function generateStrokeId() {
+      return `ipad_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    // Get point from event
+    function getPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      let x, y;
+      
+      if (e.touches && e.touches.length > 0) {
+        x = e.touches[0].clientX - rect.left;
+        y = e.touches[0].clientY - rect.top;
+      } else {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+      }
+      
+      // Normalize to 0-1 range for consistency
+      return {
+        x: x / rect.width,
+        y: y / rect.height
+      };
+    }
+
+    // Draw on canvas
+    function drawLine(from, to, color, thickness) {
+      const rect = canvas.getBoundingClientRect();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = thickness;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      ctx.moveTo(from.x * rect.width, from.y * rect.height);
+      ctx.lineTo(to.x * rect.width, to.y * rect.height);
+      ctx.stroke();
+    }
+
+    // Clear canvas
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Drawing event handlers
+    function handleStart(e) {
+      e.preventDefault();
+      isDrawing = true;
+      currentStrokeId = generateStrokeId();
+      lastPoint = getPoint(e);
+      
+      // Send stroke start
+      send('stroke', {
+        id: currentStrokeId,
+        points: [lastPoint],
+        color: currentColor,
+        thickness: currentThickness
+      });
+      
+      // Hide hint
+      hintEl.classList.remove('visible');
+    }
+
+    function handleMove(e) {
+      e.preventDefault();
+      if (!isDrawing) return;
+      
+      const point = getPoint(e);
+      
+      // Draw locally
+      drawLine(lastPoint, point, currentColor, currentThickness);
+      
+      // Send update
+      send('stroke_update', {
+        id: currentStrokeId,
+        point: point
+      });
+      
+      lastPoint = point;
+    }
+
+    function handleEnd(e) {
+      e.preventDefault();
+      if (!isDrawing) return;
+      
+      isDrawing = false;
+      
+      // Send stroke end
+      send('stroke_end', {
+        id: currentStrokeId
+      });
+      
+      currentStrokeId = null;
+      lastPoint = null;
+    }
+
+    // Color selection
+    colorBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        colorBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentColor = btn.dataset.color;
+      });
+    });
+
+    // Thickness selection
+    thicknessBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        thicknessBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentThickness = parseInt(btn.dataset.thickness);
+      });
+    });
+
+    // Clear button
+    clearBtn.addEventListener('click', () => {
+      clearCanvas();
+      send('clear', {});
+    });
+
+    // Event listeners for drawing
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchend', handleEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleEnd, { passive: false });
+    
+    // Mouse events for testing on desktop
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('mouseleave', handleEnd);
+
+    // Prevent scrolling
+    document.body.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    // Initialize
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    connect();
+    
+    // Show hint briefly
+    setTimeout(() => hintEl.classList.add('visible'), 500);
+    setTimeout(() => hintEl.classList.remove('visible'), 4000);
+  </script>
+</body>
+</html>

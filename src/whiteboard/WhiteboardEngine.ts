@@ -36,14 +36,14 @@ export class WhiteboardEngine {
         id: 'webcam',
         name: 'Webcam Only',
         type: 'image',
-        visible: false,
+        visible: true,  // Default to webcam only
         transform: { x: 0, y: 0, scale: 1, rotation: 0 },
       },
       {
         id: 'blank',
         name: 'Blank',
         type: 'image',
-        visible: true,
+        visible: false,
         transform: { x: 0, y: 0, scale: 1, rotation: 0 },
       },
       {
@@ -304,6 +304,40 @@ export class WhiteboardEngine {
 
   getTemplates(): TemplateLayer[] {
     return this.state.templates;
+  }
+
+  // Remote stroke methods for sync
+  addRemoteStroke(id: string, points: Point[], color: string, thickness: number): void {
+    const stroke: Stroke = {
+      id,
+      points: points.map(p => this.normalizedToWorld(p)),
+      color,
+      thickness,
+      timestamp: Date.now(),
+    };
+    this.state.strokes.push(stroke);
+  }
+
+  updateRemoteStroke(id: string, point: Point): void {
+    const stroke = this.state.strokes.find(s => s.id === id);
+    if (stroke) {
+      stroke.points.push(this.normalizedToWorld(point));
+    }
+  }
+
+  finalizeRemoteStroke(id: string): void {
+    // Stroke is already in the array, just validate it
+    const stroke = this.state.strokes.find(s => s.id === id);
+    if (stroke && stroke.points.length < 2) {
+      // Remove strokes with less than 2 points
+      this.state.strokes = this.state.strokes.filter(s => s.id !== id);
+    }
+  }
+
+  // Convert normalized (0-1) coordinates directly to world space
+  private normalizedToWorld(point: Point): Point {
+    const screenPoint = this.normalizedToScreen(point);
+    return this.screenToWorld(screenPoint);
   }
 
   // Utility

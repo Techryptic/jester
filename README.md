@@ -12,6 +12,7 @@ A local-only, browser-based application that lets you interact with an infinite 
 - **🔍 Infinite Canvas** - Pan and zoom to use as much space as you need
 - **🖥️ Fully Local** - All processing happens in your browser, no cloud APIs
 - **🐛 Debug Mode** - Visualize hand tracking and gesture recognition
+- **📱 iPad Sync** - Draw on your iPad with Apple Pencil and strokes appear on the whiteboard in real-time
 
 ## Gestures
 
@@ -55,6 +56,31 @@ npm run preview
 ```
 
 The built files will be in the `dist/` folder and can be served from any static file server.
+
+### iPad Sync Mode
+
+Draw on your iPad with Apple Pencil and see strokes appear on your desktop whiteboard in real-time!
+
+```bash
+# Build and start the sync server
+npm run server
+```
+
+This will display:
+```
+🖐️  Gesture Whiteboard Server Started!
+
+📱 Desktop (main app):
+   http://localhost:3000
+   http://192.168.x.x:3000
+
+✏️  iPad/Tablet (drawing):
+   http://192.168.x.x:3000/draw
+```
+
+1. Open the desktop URL in your browser
+2. On your iPad (same WiFi network), go to the `/draw` URL
+3. Draw with your Apple Pencil - strokes sync instantly to the desktop!
 
 ## Project Structure
 

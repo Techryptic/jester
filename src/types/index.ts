@@ -169,7 +169,7 @@ export type AppConfig = {
 
 // === Default Configurations ===
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
-  pinchThreshold: 0.07,
+  pinchThreshold: 0.05,
   palmOpenThreshold: 0.2,
   eraseRadius: 40,
   zoomSensitivity: 1.5,
@@ -177,7 +177,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   activationFrames: 2,
   deactivationFrames: 2,
   panSensitivity: 2.0,
-  leftHandedMode: false,
+  leftHandedMode: true,
 };
 
 export const DEFAULT_PEN_CONFIG: PenConfig = {

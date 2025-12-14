@@ -40,9 +40,9 @@ export class UIManager {
           </label>
           <div class="gesture-help">
             <small>
-              <b>Right Pinch:</b> Draw<br/>
-              <b>Left Palm:</b> Erase<br/>
-              <b>Right Palm:</b> Pan<br/>
+              <b>Left Pinch:</b> Draw<br/>
+              <b>Right Palm:</b> Erase<br/>
+              <b>Left Palm:</b> Pan<br/>
               <b>Both Pinch:</b> Zoom
             </small>
           </div>
@@ -65,8 +65,8 @@ export class UIManager {
         <section class="control-section">
           <h4>Background</h4>
           <select id="template-select">
-            <option value="webcam">📹 Webcam Only</option>
-            <option value="blank" selected>Blank (White)</option>
+            <option value="webcam" selected>📹 Webcam Only</option>
+            <option value="blank">Blank (White)</option>
             <option value="grid">Grid</option>
             <option value="dots">Dot Grid</option>
             <option value="lines">Lined</option>
@@ -108,29 +108,40 @@ export class UIManager {
           <h4 class="collapsible-header">⚙️ Advanced Tuning</h4>
           <div class="collapsible-content" style="display: none;">
             <label class="toggle-label" style="margin-bottom: 12px; padding: 8px; background: rgba(74, 144, 217, 0.2); border-radius: 4px;">
-              <input type="checkbox" id="left-handed-mode" />
+              <input type="checkbox" id="left-handed-mode" checked />
               <span>🫲 Left-Handed Mode</span>
             </label>
+            <p class="tuning-desc">Swap hand roles: Left pinch draws, Right palm erases</p>
+            
             <div class="control-row">
               <label>Background Opacity: <span id="bg-opacity-value">90</span>%</label>
               <input type="range" id="bg-opacity" min="0" max="100" step="5" value="90" />
             </div>
+            <p class="tuning-desc">Transparency of the white overlay (0% = pure webcam)</p>
+            
             <div class="control-row">
-              <label>Pinch Threshold: <span id="pinch-threshold-value">0.07</span></label>
-              <input type="range" id="pinch-threshold" min="0.03" max="0.15" step="0.01" value="0.07" />
+              <label>Pinch Threshold: <span id="pinch-threshold-value">0.05</span></label>
+              <input type="range" id="pinch-threshold" min="0.03" max="0.15" step="0.01" value="0.05" />
             </div>
+            <p class="tuning-desc">How close thumb & index must be to trigger drawing. Lower = more sensitive</p>
+            
             <div class="control-row">
               <label>Palm Threshold: <span id="palm-threshold-value">0.2</span></label>
               <input type="range" id="palm-threshold" min="0.1" max="0.4" step="0.02" value="0.2" />
             </div>
+            <p class="tuning-desc">How open your hand must be to trigger erase/pan. Higher = more open</p>
+            
             <div class="control-row">
               <label>Erase Radius: <span id="erase-radius-value">40</span></label>
               <input type="range" id="erase-radius" min="10" max="100" step="5" value="40" />
             </div>
+            <p class="tuning-desc">Size of the eraser circle in pixels</p>
+            
             <div class="control-row">
               <label>Smoothing: <span id="smoothing-value">0.4</span></label>
               <input type="range" id="smoothing" min="0.1" max="0.9" step="0.1" value="0.4" />
             </div>
+            <p class="tuning-desc">Reduces hand jitter. Higher = smoother but laggy</p>
           </div>
         </section>
       </div>

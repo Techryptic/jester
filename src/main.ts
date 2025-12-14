@@ -3,7 +3,8 @@ import { GestureEngine } from './gestures/GestureEngine';
 import { WhiteboardEngine } from './whiteboard/WhiteboardEngine';
 import { Renderer } from './rendering/Renderer';
 import { UIManager } from './ui/UIManager';
-import type { Hand } from './types';
+import { SyncClient } from './sync/SyncClient';
+import type { Hand, Point } from './types';
 import './style.css';
 
 class GestureWhiteboardApp {
@@ -12,16 +13,19 @@ class GestureWhiteboardApp {
   private whiteboard: WhiteboardEngine;
   private renderer: Renderer;
   private ui: UIManager;
+  private syncClient: SyncClient;
 
   private videoElement!: HTMLVideoElement;
   private canvasElement!: HTMLCanvasElement;
   private latestHands: Hand[] = [];
   private running = false;
+  private syncConnected = false;
 
   constructor() {
     this.handTracker = new HandTracker();
     this.gestureEngine = new GestureEngine();
     this.whiteboard = new WhiteboardEngine();
+    this.syncClient = new SyncClient();
     // Renderer and UI will be initialized after DOM elements are created
     this.renderer = null as any;
     this.ui = null as any;
@@ -67,6 +71,9 @@ class GestureWhiteboardApp {
       // Set initial canvas size
       this.handleResize();
       window.addEventListener('resize', () => this.handleResize());
+
+      // Initialize sync client for iPad drawing
+      this.setupSync();
 
       // Hide status and start
       this.hideStatus();
@@ -208,6 +215,37 @@ class GestureWhiteboardApp {
     if (overlay) {
       overlay.style.display = 'none';
     }
+  }
+
+  private setupSync(): void {
+    // Connect to sync server
+    this.syncClient.connect();
+
+    // Handle sync messages
+    this.syncClient.onMessage((message) => {
+      if (message.type === 'connection') {
+        const data = message.data as { connected?: boolean; totalClients?: number };
+        this.syncConnected = data.connected ?? this.syncConnected;
+        if (data.totalClients !== undefined) {
+          console.log(`[Sync] Total connected clients: ${data.totalClients}`);
+        }
+      } else if (message.type === 'stroke') {
+        // New stroke started from iPad
+        const data = message.data as { id: string; points: Point[]; color: string; thickness: number };
+        this.whiteboard.addRemoteStroke(data.id, data.points, data.color, data.thickness);
+      } else if (message.type === 'stroke_update') {
+        // Stroke continues
+        const data = message.data as { id: string; point: Point };
+        this.whiteboard.updateRemoteStroke(data.id, data.point);
+      } else if (message.type === 'stroke_end') {
+        // Stroke finished
+        const data = message.data as { id: string };
+        this.whiteboard.finalizeRemoteStroke(data.id);
+      } else if (message.type === 'clear') {
+        // Clear all strokes
+        this.whiteboard.clearStrokes();
+      }
+    });
   }
 }
 
