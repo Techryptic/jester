@@ -8,20 +8,28 @@ A local-only, browser-based application that lets you interact with an infinite 
 
 - **✋ Hand Gesture Control** - Draw, erase, pan, and zoom using natural hand gestures
 - **🎨 Drawing Tools** - Customizable pen color and thickness
-- **📐 Template Backgrounds** - Choose from blank, grid, dot grid, or lined backgrounds
+- **📐 Template Backgrounds** - Choose from webcam-only, blank, grid, dot grid, or lined backgrounds
 - **🔍 Infinite Canvas** - Pan and zoom to use as much space as you need
 - **🖥️ Fully Local** - All processing happens in your browser, no cloud APIs
 - **🐛 Debug Mode** - Visualize hand tracking and gesture recognition
-- **📱 iPad Sync** - Draw on your iPad with Apple Pencil and strokes appear on the whiteboard in real-time
+- **📱 iPad Sync** - Draw on your iPad with Apple Pencil and strokes appear in real-time
+- **🫲 Left-Handed Mode** - Swap hand gestures for left-handed users
+- **↩️ Undo/Redo** - Easily undo accidental strokes
+- **📤 Image Upload** - Import AI-generated diagrams and annotate them
+- **🎚️ Gesture Toggles** - Enable/disable individual gestures (draw, erase, pan, zoom)
+- **🎛️ Background Opacity** - Control webcam overlay transparency
 
 ## Gestures
 
+**Default (Left-Handed Mode ON):**
 | Gesture | Action |
 |---------|--------|
-| **Right Hand Pinch** | Draw on the whiteboard |
-| **Left Palm Open** | Erase strokes |
-| **Right Palm Open** | Pan the canvas |
+| **Left Hand Pinch** | Draw on the whiteboard |
+| **Right Palm Open** | Erase strokes |
+| **Left Palm Open** | Pan the canvas |
 | **Both Hands Pinch** | Zoom in/out |
+
+*Note: In Right-Handed Mode, swap left/right hands for draw and erase.*
 
 ## Getting Started
 
@@ -165,14 +173,16 @@ The control panel provides access to all configuration options:
 
 ## Future Improvements
 
-These features are out of scope for the MVP but could be added:
+Potential features for future versions:
 
-- [ ] Undo/Redo functionality
 - [ ] Save/Load boards to local storage
 - [ ] Export to PNG/SVG
 - [ ] Virtual camera output
+- [ ] Pressure sensitivity (Apple Pencil)
+- [ ] Laser pointer mode
+- [ ] Shape recognition (auto-snap circles, rectangles)
+- [ ] Keyboard shortcuts (Ctrl+Z, etc.)
 - [ ] Multiple pen tools (highlighter, shapes)
-- [ ] Collaborative mode
 
 ## License
 
