@@ -6,6 +6,7 @@ import type {
   GestureEvent,
   TemplateLayer,
   PenConfig,
+  ImageLayer,
 } from '../types';
 import { DEFAULT_BOARD_STATE, DEFAULT_PEN_CONFIG } from '../types';
 
@@ -14,6 +15,14 @@ export class WhiteboardEngine {
   private penConfig: PenConfig;
   private canvasWidth: number = 1280;
   private canvasHeight: number = 720;
+  
+  // Undo/Redo stacks
+  private undoStack: Stroke[] = [];
+  private redoStack: Stroke[] = [];
+  private maxUndoSize: number = 50;
+  
+  // Image layers
+  private images: ImageLayer[] = [];
 
   constructor() {
     this.state = this.createInitialState();
@@ -338,6 +347,68 @@ export class WhiteboardEngine {
   private normalizedToWorld(point: Point): Point {
     const screenPoint = this.normalizedToScreen(point);
     return this.screenToWorld(screenPoint);
+  }
+
+  // === UNDO/REDO ===
+  undo(): boolean {
+    if (this.state.strokes.length === 0) return false;
+    
+    const lastStroke = this.state.strokes.pop();
+    if (lastStroke) {
+      this.redoStack.push(lastStroke);
+      // Limit redo stack size
+      if (this.redoStack.length > this.maxUndoSize) {
+        this.redoStack.shift();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  redo(): boolean {
+    if (this.redoStack.length === 0) return false;
+    
+    const stroke = this.redoStack.pop();
+    if (stroke) {
+      this.state.strokes.push(stroke);
+      return true;
+    }
+    return false;
+  }
+
+  canUndo(): boolean {
+    return this.state.strokes.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
+  // === IMAGE LAYERS ===
+  addImage(src: string, width: number, height: number): string {
+    const id = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Center the image in the current view
+    const image: ImageLayer = {
+      id,
+      src,
+      x: this.state.camera.x,
+      y: this.state.camera.y,
+      width,
+      height,
+      opacity: 1,
+    };
+    
+    this.images.push(image);
+    return id;
+  }
+
+  removeImage(id: string): void {
+    this.images = this.images.filter(img => img.id !== id);
+  }
+
+  getImages(): ImageLayer[] {
+    return this.images;
   }
 
   // Utility

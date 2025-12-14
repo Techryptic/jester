@@ -134,6 +134,17 @@ export type BoardState = {
   activeStrokeId: string | null;
 };
 
+// Image layer for uploaded images
+export type ImageLayer = {
+  id: string;
+  src: string;  // Base64 data URL
+  x: number;    // World position
+  y: number;
+  width: number;
+  height: number;
+  opacity: number;
+};
+
 // === Configuration ===
 export type GestureConfig = {
   pinchThreshold: number;

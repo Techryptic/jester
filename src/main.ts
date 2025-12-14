@@ -185,7 +185,8 @@ class GestureWhiteboardApp {
         this.whiteboard.getState(),
         this.latestHands,
         this.gestureEngine.getState(),
-        this.ui.getConfig()
+        this.ui.getConfig(),
+        this.whiteboard.getImages()
       );
     } catch (error) {
       console.error('Loop error:', error);
@@ -244,6 +245,9 @@ class GestureWhiteboardApp {
       } else if (message.type === 'clear') {
         // Clear all strokes
         this.whiteboard.clearStrokes();
+      } else if (message.type === 'undo') {
+        // Undo last stroke
+        this.whiteboard.undo();
       }
     });
   }

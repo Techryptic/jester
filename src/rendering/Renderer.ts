@@ -7,6 +7,7 @@ import type {
   Camera,
   TemplateLayer,
   Point,
+  ImageLayer,
 } from '../types';
 import { LANDMARK } from '../types';
 
@@ -19,6 +20,9 @@ export class Renderer {
   private fps: number = 0;
   private fpsUpdateInterval: number = 500; // Update FPS every 500ms
   private lastFpsUpdate: number = 0;
+  
+  // Cache for loaded images
+  private imageCache: Map<string, HTMLImageElement> = new Map();
 
   constructor(canvas: HTMLCanvasElement, video: HTMLVideoElement) {
     this.canvas = canvas;
@@ -34,7 +38,8 @@ export class Renderer {
     boardState: BoardState,
     hands: Hand[],
     gestureState: GestureState,
-    config: AppConfig
+    config: AppConfig,
+    images: ImageLayer[] = []
   ): void {
     // Update FPS
     this.updateFPS();
@@ -52,8 +57,8 @@ export class Renderer {
     // Draw mirrored video as background
     this.drawVideo(isWebcamOnly);
 
-    // Draw whiteboard content (templates + strokes) with camera transform
-    this.drawWhiteboardContent(boardState, camera, config.backgroundOpacity);
+    // Draw whiteboard content (templates + strokes + images) with camera transform
+    this.drawWhiteboardContent(boardState, camera, config.backgroundOpacity, images);
 
     // Draw debug overlays (on top, in screen space)
     if (config.debug.showLandmarks || config.debug.showGestureState || config.debug.showFPS) {
@@ -95,7 +100,7 @@ export class Renderer {
     ctx.restore();
   }
 
-  private drawWhiteboardContent(boardState: BoardState, camera: Camera, backgroundOpacity: number): void {
+  private drawWhiteboardContent(boardState: BoardState, camera: Camera, backgroundOpacity: number, images: ImageLayer[]): void {
     const { ctx, canvas } = this;
 
     ctx.save();
@@ -109,10 +114,45 @@ export class Renderer {
     // Draw templates
     this.drawTemplates(boardState.templates, backgroundOpacity);
 
+    // Draw uploaded images
+    this.drawImages(images);
+
     // Draw strokes
     this.drawStrokes(boardState.strokes);
 
     ctx.restore();
+  }
+
+  private drawImages(images: ImageLayer[]): void {
+    const { ctx } = this;
+
+    for (const img of images) {
+      // Get or create cached image element
+      let imgEl = this.imageCache.get(img.id);
+      
+      if (!imgEl) {
+        imgEl = new Image();
+        imgEl.src = img.src;
+        this.imageCache.set(img.id, imgEl);
+      }
+
+      // Only draw if image is loaded
+      if (imgEl.complete && imgEl.naturalWidth > 0) {
+        ctx.save();
+        ctx.globalAlpha = img.opacity;
+        
+        // Draw centered at position
+        ctx.drawImage(
+          imgEl,
+          img.x - img.width / 2,
+          img.y - img.height / 2,
+          img.width,
+          img.height
+        );
+        
+        ctx.restore();
+      }
+    }
   }
 
   private drawTemplates(templates: TemplateLayer[], backgroundOpacity: number): void {

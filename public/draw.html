@@ -66,9 +66,11 @@
       border: 3px solid transparent;
       cursor: pointer;
       transition: transform 0.1s, border-color 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     
-    .color-btn:hover {
+    .color-btn:hover, .color-btn:active {
       transform: scale(1.1);
     }
     
@@ -89,15 +91,34 @@
       color: white;
       font-weight: bold;
       font-size: 14px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     
-    .thickness-btn:hover {
+    .thickness-btn:hover, .thickness-btn:active {
       background: rgba(255,255,255,0.2);
     }
     
     .thickness-btn.active {
       border-color: #4a90d9;
       background: rgba(74, 144, 217, 0.3);
+    }
+    
+    #undo-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    #undo-btn:hover, #undo-btn:active {
+      background: rgba(255,255,255,0.25);
     }
     
     #clear-btn {
@@ -109,9 +130,11 @@
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     
-    #clear-btn:hover {
+    #clear-btn:hover, #clear-btn:active {
       background: rgba(239, 68, 68, 0.5);
     }
     
@@ -169,6 +192,7 @@
         <button class="thickness-btn" data-thickness="16">XL</button>
       </div>
       <div class="toolbar-section">
+        <button id="undo-btn">↩ Undo</button>
         <button id="clear-btn">Clear</button>
       </div>
     </div>
@@ -196,6 +220,7 @@
     const colorBtns = document.querySelectorAll('.color-btn');
     const thicknessBtns = document.querySelectorAll('.thickness-btn');
     const clearBtn = document.getElementById('clear-btn');
+    const undoBtn = document.getElementById('undo-btn');
 
     // Setup canvas
     function resizeCanvas() {
@@ -347,9 +372,10 @@
       lastPoint = null;
     }
 
-    // Color selection
+    // Color selection - use pointerdown for better stylus support
     colorBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         colorBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentColor = btn.dataset.color;
@@ -358,15 +384,23 @@
 
     // Thickness selection
     thicknessBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
         thicknessBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentThickness = parseInt(btn.dataset.thickness);
       });
     });
 
+    // Undo button - sends undo message to main app
+    undoBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      send('undo', {});
+    });
+
     // Clear button
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       clearCanvas();
       send('clear', {});
     });

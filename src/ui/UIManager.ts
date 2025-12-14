@@ -77,9 +77,17 @@ export class UIManager {
         <section class="control-section">
           <h4>Actions</h4>
           <div class="button-row">
+            <button id="undo-btn" class="action-btn">↩ Undo</button>
+            <button id="redo-btn" class="action-btn">↪ Redo</button>
+          </div>
+          <div class="button-row" style="margin-top: 8px;">
             <button id="clear-canvas" class="action-btn danger">Clear All</button>
             <button id="reset-camera" class="action-btn">Reset View</button>
           </div>
+          <div class="button-row" style="margin-top: 8px;">
+            <button id="upload-image" class="action-btn">📤 Upload Image</button>
+          </div>
+          <input type="file" id="image-input" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" style="display: none;" />
         </section>
 
         <!-- Debug Controls -->
@@ -206,6 +214,34 @@ export class UIManager {
       this.whiteboard.resetCamera();
     });
 
+    // Undo button
+    const undoBtn = this.container.querySelector('#undo-btn');
+    undoBtn?.addEventListener('click', () => {
+      this.whiteboard.undo();
+    });
+
+    // Redo button
+    const redoBtn = this.container.querySelector('#redo-btn');
+    redoBtn?.addEventListener('click', () => {
+      this.whiteboard.redo();
+    });
+
+    // Image upload
+    const uploadBtn = this.container.querySelector('#upload-image');
+    const imageInput = this.container.querySelector('#image-input') as HTMLInputElement;
+    
+    uploadBtn?.addEventListener('click', () => {
+      imageInput?.click();
+    });
+
+    imageInput?.addEventListener('change', () => {
+      const file = imageInput.files?.[0];
+      if (file) {
+        this.handleImageUpload(file);
+        imageInput.value = ''; // Reset for next upload
+      }
+    });
+
     // Debug toggles
     this.setupDebugToggle('#show-landmarks', 'showLandmarks');
     this.setupDebugToggle('#show-gesture-state', 'showGestureState');
@@ -303,5 +339,35 @@ export class UIManager {
 
   isGesturesEnabled(): boolean {
     return this.config.gesturesEnabled;
+  }
+
+  private handleImageUpload(file: File): void {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      if (!src) return;
+
+      // Create an image to get dimensions
+      const img = new Image();
+      img.onload = () => {
+        // Scale image if too large (max 800px on longest side)
+        const maxSize = 800;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height);
+          width *= ratio;
+          height *= ratio;
+        }
+
+        // Add to whiteboard
+        this.whiteboard.addImage(src, width, height);
+      };
+      img.src = src;
+    };
+
+    reader.readAsDataURL(file);
   }
 }
