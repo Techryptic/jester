@@ -54,11 +54,24 @@ class GestureWhiteboardApp {
         }
       });
 
-      // Wire up gesture events to whiteboard
+      // Wire up gesture events to whiteboard, respecting individual toggles
       this.gestureEngine.onGesture((event) => {
-        if (this.ui.isGesturesEnabled()) {
-          this.whiteboard.handleGestureEvent(event);
+        if (!this.ui.isGesturesEnabled()) return;
+        
+        const toggles = this.ui.getConfig().gestureToggles;
+        
+        // Check if the specific gesture type is enabled
+        if (event.type === 'DRAW_START' || event.type === 'DRAW_MOVE' || event.type === 'DRAW_END') {
+          if (!toggles.draw) return;
+        } else if (event.type === 'ERASE') {
+          if (!toggles.erase) return;
+        } else if (event.type === 'PAN') {
+          if (!toggles.pan) return;
+        } else if (event.type === 'ZOOM') {
+          if (!toggles.zoom) return;
         }
+        
+        this.whiteboard.handleGestureEvent(event);
       });
 
       // Initialize renderer
@@ -248,8 +261,33 @@ class GestureWhiteboardApp {
       } else if (message.type === 'undo') {
         // Undo last stroke
         this.whiteboard.undo();
+      } else if (message.type === 'toggle_gesture') {
+        // Toggle individual gesture from remote client (iPad)
+        const data = message.data as { gesture: string; enabled: boolean };
+        const config = this.ui.getConfig();
+        
+        if (data.gesture === 'draw') {
+          config.gestureToggles.draw = data.enabled;
+        } else if (data.gesture === 'erase') {
+          config.gestureToggles.erase = data.enabled;
+        } else if (data.gesture === 'pan') {
+          config.gestureToggles.pan = data.enabled;
+        } else if (data.gesture === 'zoom') {
+          config.gestureToggles.zoom = data.enabled;
+        }
+        
+        // Update the UI checkboxes to reflect the change
+        this.updateGestureToggleUI(data.gesture, data.enabled);
       }
     });
+  }
+
+  private updateGestureToggleUI(gesture: string, enabled: boolean): void {
+    const checkboxId = `toggle-${gesture}`;
+    const checkbox = document.getElementById(checkboxId) as HTMLInputElement;
+    if (checkbox) {
+      checkbox.checked = enabled;
+    }
   }
 }
 

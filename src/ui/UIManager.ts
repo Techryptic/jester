@@ -36,8 +36,26 @@ export class UIManager {
           <h4>Gestures</h4>
           <label class="toggle-label">
             <input type="checkbox" id="gestures-enabled" checked />
-            <span>Enable Gestures</span>
+            <span>Enable All Gestures</span>
           </label>
+          <div class="gesture-toggles" style="margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+            <label class="toggle-label small">
+              <input type="checkbox" id="toggle-draw" checked />
+              <span>✏️ Draw</span>
+            </label>
+            <label class="toggle-label small">
+              <input type="checkbox" id="toggle-erase" checked />
+              <span>🧹 Erase</span>
+            </label>
+            <label class="toggle-label small">
+              <input type="checkbox" id="toggle-pan" checked />
+              <span>✋ Pan</span>
+            </label>
+            <label class="toggle-label small">
+              <input type="checkbox" id="toggle-zoom" checked />
+              <span>🔍 Zoom</span>
+            </label>
+          </div>
           <div class="gesture-help">
             <small>
               <b>Left Pinch:</b> Draw<br/>
@@ -175,6 +193,25 @@ export class UIManager {
     const gesturesEnabled = this.container.querySelector('#gestures-enabled') as HTMLInputElement;
     gesturesEnabled?.addEventListener('change', () => {
       this.config.gesturesEnabled = gesturesEnabled.checked;
+    });
+
+    // Individual gesture toggles
+    const toggleDraw = this.container.querySelector('#toggle-draw') as HTMLInputElement;
+    const toggleErase = this.container.querySelector('#toggle-erase') as HTMLInputElement;
+    const togglePan = this.container.querySelector('#toggle-pan') as HTMLInputElement;
+    const toggleZoom = this.container.querySelector('#toggle-zoom') as HTMLInputElement;
+
+    toggleDraw?.addEventListener('change', () => {
+      this.config.gestureToggles.draw = toggleDraw.checked;
+    });
+    toggleErase?.addEventListener('change', () => {
+      this.config.gestureToggles.erase = toggleErase.checked;
+    });
+    togglePan?.addEventListener('change', () => {
+      this.config.gestureToggles.pan = togglePan.checked;
+    });
+    toggleZoom?.addEventListener('change', () => {
+      this.config.gestureToggles.zoom = toggleZoom.checked;
     });
 
     // Pen color

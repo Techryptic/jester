@@ -30,7 +30,7 @@ const clients = new Set<WebSocket>();
 
 // Message types
 interface SyncMessage {
-  type: 'stroke' | 'stroke_update' | 'stroke_end' | 'clear' | 'ping' | 'connection';
+  type: 'stroke' | 'stroke_update' | 'stroke_end' | 'clear' | 'undo' | 'toggle_gesture' | 'ping' | 'connection';
   data?: unknown;
   clientId?: string;
 }
@@ -60,8 +60,13 @@ wss.on('connection', (ws: WebSocket) => {
       // Add client ID to message
       parsed.clientId = clientId;
       
-      // Broadcast to all OTHER clients
-      broadcast(parsed, ws);
+      // For undo, clear, and toggle_gesture, broadcast to ALL clients (including sender)
+      if (parsed.type === 'undo' || parsed.type === 'clear' || parsed.type === 'toggle_gesture') {
+        broadcast(parsed);  // No exclusion
+      } else {
+        // Broadcast to all OTHER clients
+        broadcast(parsed, ws);
+      }
     } catch (error) {
       console.error('Failed to parse message:', error);
     }

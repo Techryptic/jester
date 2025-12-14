@@ -170,11 +170,19 @@ export type DebugConfig = {
   showCamera: boolean;
 };
 
+export type GestureToggles = {
+  draw: boolean;
+  erase: boolean;
+  pan: boolean;
+  zoom: boolean;
+};
+
 export type AppConfig = {
   gesture: GestureConfig;
   pen: PenConfig;
   debug: DebugConfig;
   gesturesEnabled: boolean;
+  gestureToggles: GestureToggles;
   backgroundOpacity: number;
 };
 
@@ -203,11 +211,19 @@ export const DEFAULT_DEBUG_CONFIG: DebugConfig = {
   showCamera: false,
 };
 
+export const DEFAULT_GESTURE_TOGGLES: GestureToggles = {
+  draw: true,
+  erase: true,
+  pan: true,
+  zoom: true,
+};
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   gesture: DEFAULT_GESTURE_CONFIG,
   pen: DEFAULT_PEN_CONFIG,
   debug: DEFAULT_DEBUG_CONFIG,
   gesturesEnabled: true,
+  gestureToggles: DEFAULT_GESTURE_TOGGLES,
   backgroundOpacity: 0.9,
 };
 

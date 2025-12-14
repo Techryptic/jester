@@ -138,6 +138,25 @@
       background: rgba(239, 68, 68, 0.5);
     }
     
+    .gesture-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      opacity: 0.4;
+    }
+    
+    .gesture-toggle.active {
+      opacity: 1;
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.2);
+    }
+    
     #canvas-container {
       flex: 1;
       position: relative;
@@ -190,6 +209,12 @@
         <button class="thickness-btn active" data-thickness="4">M</button>
         <button class="thickness-btn" data-thickness="8">L</button>
         <button class="thickness-btn" data-thickness="16">XL</button>
+      </div>
+      <div class="toolbar-section gesture-toggles">
+        <button class="gesture-toggle active" id="toggle-draw" data-gesture="draw">✏️</button>
+        <button class="gesture-toggle active" id="toggle-erase" data-gesture="erase">🧹</button>
+        <button class="gesture-toggle active" id="toggle-pan" data-gesture="pan">✋</button>
+        <button class="gesture-toggle active" id="toggle-zoom" data-gesture="zoom">🔍</button>
       </div>
       <div class="toolbar-section">
         <button id="undo-btn">↩ Undo</button>
@@ -261,9 +286,10 @@
       };
       
       ws.onmessage = (event) => {
-        // Handle incoming messages if needed
+        // Handle incoming messages
         const message = JSON.parse(event.data);
-        if (message.type === 'clear') {
+        if (message.type === 'clear' || message.type === 'undo') {
+          // Clear local canvas when undo or clear is received
           clearCanvas();
         }
       };
@@ -403,6 +429,18 @@
       e.preventDefault();
       clearCanvas();
       send('clear', {});
+    });
+
+    // Gesture toggles - control desktop gestures
+    const gestureToggles = document.querySelectorAll('.gesture-toggle');
+    gestureToggles.forEach(btn => {
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        btn.classList.toggle('active');
+        const gesture = btn.dataset.gesture;
+        const enabled = btn.classList.contains('active');
+        send('toggle_gesture', { gesture, enabled });
+      });
     });
 
     // Event listeners for drawing
