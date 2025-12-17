@@ -168,6 +168,7 @@ export type DebugConfig = {
   showGestureState: boolean;
   showFPS: boolean;
   showCamera: boolean;
+  showDebugOverlay: boolean;  // Master toggle for the debug box
 };
 
 export type GestureToggles = {
@@ -177,6 +178,8 @@ export type GestureToggles = {
   zoom: boolean;
 };
 
+export type AspectRatioOption = 'none' | '16:9' | '16:10' | '4:3' | 'custom';
+
 export type AppConfig = {
   gesture: GestureConfig;
   pen: PenConfig;
@@ -184,6 +187,9 @@ export type AppConfig = {
   gesturesEnabled: boolean;
   gestureToggles: GestureToggles;
   backgroundOpacity: number;
+  aspectRatio: AspectRatioOption;  // Aspect ratio lock
+  customAspectRatio?: { width: number; height: number };  // For custom ratio
+  presentationMode: boolean;  // Hide control panel
 };
 
 // === Default Configurations ===
@@ -209,6 +215,7 @@ export const DEFAULT_DEBUG_CONFIG: DebugConfig = {
   showGestureState: true,
   showFPS: true,
   showCamera: false,
+  showDebugOverlay: true,
 };
 
 export const DEFAULT_GESTURE_TOGGLES: GestureToggles = {
@@ -225,6 +232,8 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   gesturesEnabled: true,
   gestureToggles: DEFAULT_GESTURE_TOGGLES,
   backgroundOpacity: 0.9,
+  aspectRatio: 'none',
+  presentationMode: false,
 };
 
 export const DEFAULT_CAMERA: Camera = {

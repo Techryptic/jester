@@ -108,9 +108,42 @@ export class UIManager {
           <input type="file" id="image-input" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" style="display: none;" />
         </section>
 
+        <!-- Display Options -->
+        <section class="control-section">
+          <h4>Display</h4>
+          <div class="control-row">
+            <label>📐 Aspect Ratio</label>
+            <select id="aspect-ratio">
+              <option value="none">Fill Window</option>
+              <option value="16:9">16:9 (1080p)</option>
+              <option value="16:10">16:10 (WUXGA)</option>
+              <option value="4:3">4:3 (Standard)</option>
+              <option value="custom">Custom...</option>
+            </select>
+          </div>
+          <div id="custom-ratio-inputs" style="display: none; margin-top: 8px;">
+            <div class="control-row">
+              <label>Width</label>
+              <input type="number" id="custom-width" value="1920" min="100" max="7680" style="width: 80px;" />
+            </div>
+            <div class="control-row">
+              <label>Height</label>
+              <input type="number" id="custom-height" value="1200" min="100" max="4320" style="width: 80px;" />
+            </div>
+          </div>
+          <label class="toggle-label">
+            <input type="checkbox" id="presentation-mode" />
+            <span>🎬 Presentation Mode (P)</span>
+          </label>
+        </section>
+
         <!-- Debug Controls -->
         <section class="control-section">
           <h4>Debug</h4>
+          <label class="toggle-label">
+            <input type="checkbox" id="show-debug-overlay" checked />
+            <span>📊 Show Debug Overlay</span>
+          </label>
           <label class="toggle-label">
             <input type="checkbox" id="show-landmarks" checked />
             <span>Show Hands</span>
@@ -127,6 +160,7 @@ export class UIManager {
             <input type="checkbox" id="show-camera" />
             <span>Show Camera Info</span>
           </label>
+          <div id="webcam-info" style="margin-top: 8px; font-size: 11px; color: #888;"></div>
         </section>
 
         <!-- Gesture Tuning -->
@@ -280,10 +314,58 @@ export class UIManager {
     });
 
     // Debug toggles
+    this.setupDebugToggle('#show-debug-overlay', 'showDebugOverlay');
     this.setupDebugToggle('#show-landmarks', 'showLandmarks');
     this.setupDebugToggle('#show-gesture-state', 'showGestureState');
     this.setupDebugToggle('#show-fps', 'showFPS');
     this.setupDebugToggle('#show-camera', 'showCamera');
+
+    // Aspect ratio select
+    const aspectRatioSelect = this.container.querySelector('#aspect-ratio') as HTMLSelectElement;
+    const customRatioInputs = this.container.querySelector('#custom-ratio-inputs') as HTMLElement;
+    const customWidth = this.container.querySelector('#custom-width') as HTMLInputElement;
+    const customHeight = this.container.querySelector('#custom-height') as HTMLInputElement;
+
+    aspectRatioSelect?.addEventListener('change', () => {
+      const value = aspectRatioSelect.value as any;
+      this.config.aspectRatio = value;
+      
+      // Show/hide custom inputs
+      if (customRatioInputs) {
+        customRatioInputs.style.display = value === 'custom' ? 'block' : 'none';
+      }
+      
+      // Trigger resize event
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    const updateCustomRatio = () => {
+      const w = parseInt(customWidth?.value || '1920');
+      const h = parseInt(customHeight?.value || '1200');
+      if (w > 0 && h > 0) {
+        this.config.customAspectRatio = { width: w, height: h };
+        window.dispatchEvent(new Event('resize'));
+      }
+    };
+    customWidth?.addEventListener('change', updateCustomRatio);
+    customHeight?.addEventListener('change', updateCustomRatio);
+
+    const presentationMode = this.container.querySelector('#presentation-mode') as HTMLInputElement;
+    presentationMode?.addEventListener('change', () => {
+      this.config.presentationMode = presentationMode.checked;
+      this.updatePresentationMode();
+    });
+
+    // Keyboard shortcut for presentation mode (P key)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'p' || e.key === 'P') {
+        // Don't trigger if typing in an input
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        this.config.presentationMode = !this.config.presentationMode;
+        if (presentationMode) presentationMode.checked = this.config.presentationMode;
+        this.updatePresentationMode();
+      }
+    });
 
     // Collapsible sections
     const collapsibleHeaders = this.container.querySelectorAll('.collapsible-header');
@@ -376,6 +458,20 @@ export class UIManager {
 
   isGesturesEnabled(): boolean {
     return this.config.gesturesEnabled;
+  }
+
+  private updatePresentationMode(): void {
+    if (this.container) {
+      this.container.style.display = this.config.presentationMode ? 'none' : 'block';
+    }
+  }
+
+  updateWebcamInfo(width: number, height: number, fps?: number): void {
+    const infoEl = this.container?.querySelector('#webcam-info');
+    if (infoEl) {
+      const fpsText = fps !== undefined ? ` @ ${fps}fps` : '';
+      infoEl.textContent = `📷 Webcam: ${width}×${height}${fpsText}`;
+    }
   }
 
   private handleImageUpload(file: File): void {

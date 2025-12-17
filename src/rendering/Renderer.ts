@@ -60,9 +60,14 @@ export class Renderer {
     // Draw whiteboard content (templates + strokes + images) with camera transform
     this.drawWhiteboardContent(boardState, camera, config.backgroundOpacity, images);
 
-    // Draw debug overlays (on top, in screen space)
-    if (config.debug.showLandmarks || config.debug.showGestureState || config.debug.showFPS) {
+    // Draw debug overlays (on top, in screen space) - only if master toggle is on
+    if (config.debug.showDebugOverlay) {
       this.drawDebugOverlay(hands, gestureState, camera, config);
+    } else if (config.debug.showLandmarks) {
+      // Still draw hand landmarks if enabled, even when debug overlay is off
+      for (const hand of hands) {
+        this.drawHandLandmarks(hand);
+      }
     }
 
     // Draw erase cursor if erasing (swap palm position for left-handed mode)

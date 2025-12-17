@@ -81,6 +81,12 @@ class GestureWhiteboardApp {
       this.ui = new UIManager(this.whiteboard, this.gestureEngine);
       this.ui.initialize();
 
+      // Update webcam info in UI
+      this.ui.updateWebcamInfo(
+        this.videoElement.videoWidth,
+        this.videoElement.videoHeight
+      );
+
       // Set initial canvas size
       this.handleResize();
       window.addEventListener('resize', () => this.handleResize());
@@ -166,8 +172,45 @@ class GestureWhiteboardApp {
     const container = document.getElementById('app');
     if (!container) return;
 
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    let width = container.clientWidth;
+    let height = container.clientHeight;
+
+    // Check if aspect ratio lock is enabled
+    const config = this.ui?.getConfig();
+    if (config?.aspectRatio && config.aspectRatio !== 'none') {
+      let targetRatio: number;
+
+      switch (config.aspectRatio) {
+        case '16:9':
+          targetRatio = 16 / 9;
+          break;
+        case '16:10':
+          targetRatio = 16 / 10;
+          break;
+        case '4:3':
+          targetRatio = 4 / 3;
+          break;
+        case 'custom':
+          if (config.customAspectRatio) {
+            targetRatio = config.customAspectRatio.width / config.customAspectRatio.height;
+          } else {
+            targetRatio = 16 / 10; // Default custom
+          }
+          break;
+        default:
+          targetRatio = width / height; // No change
+      }
+
+      const currentRatio = width / height;
+
+      if (currentRatio > targetRatio) {
+        // Window is wider than target, reduce width
+        width = height * targetRatio;
+      } else {
+        // Window is taller than target, reduce height
+        height = width / targetRatio;
+      }
+    }
 
     this.canvasElement.width = width;
     this.canvasElement.height = height;
