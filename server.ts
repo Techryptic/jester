@@ -116,7 +116,7 @@ function getLocalIP(): string {
 
 server.listen(PORT, '0.0.0.0', () => {
   const localIP = getLocalIP();
-  console.log('\n🖐️  Gesture Whiteboard Server Started!\n');
+  console.log('\n🃏  Jester Server Started!\n');
   console.log('📱 Desktop (main app):');
   console.log(`   http://localhost:${PORT}`);
   console.log(`   http://${localIP}:${PORT}\n`);

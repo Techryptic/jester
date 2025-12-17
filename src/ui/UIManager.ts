@@ -26,7 +26,7 @@ export class UIManager {
     this.container.id = 'control-panel';
     this.container.innerHTML = `
       <div class="panel-header">
-        <h3>🖐️ Gesture Whiteboard</h3>
+        <h3>🃏 Jester</h3>
         <button id="toggle-panel" class="icon-btn">−</button>
       </div>
       
