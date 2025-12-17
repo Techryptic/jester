@@ -54,8 +54,8 @@ export class Renderer {
     const activeTemplate = boardState.templates.find(t => t.visible);
     const isWebcamOnly = activeTemplate?.id === 'webcam';
 
-    // Draw mirrored video as background
-    this.drawVideo(isWebcamOnly);
+    // Draw video as background (mirrored based on config)
+    this.drawVideo(isWebcamOnly, config.mirrorOutput);
 
     // Draw whiteboard content (templates + strokes + images) with camera transform
     this.drawWhiteboardContent(boardState, camera, config.backgroundOpacity, images);
@@ -66,7 +66,7 @@ export class Renderer {
     } else if (config.debug.showLandmarks) {
       // Still draw hand landmarks if enabled, even when debug overlay is off
       for (const hand of hands) {
-        this.drawHandLandmarks(hand);
+        this.drawHandLandmarks(hand, config.mirrorOutput);
       }
     }
 
@@ -75,7 +75,8 @@ export class Renderer {
       ? gestureState.lastRightPalmPos 
       : gestureState.lastLeftPalmPos;
     if (gestureState.currentGesture === 'ERASING' && erasePalmPos) {
-      this.drawEraseCursor(erasePalmPos, config.gesture.eraseRadius);
+      const pos = config.mirrorOutput ? erasePalmPos : { x: 1 - erasePalmPos.x, y: erasePalmPos.y };
+      this.drawEraseCursor(pos, config.gesture.eraseRadius);
     }
 
     // Draw draw cursor if drawing (swap pinch position for left-handed mode)
@@ -83,19 +84,23 @@ export class Renderer {
       ? gestureState.lastLeftPinchPos 
       : gestureState.lastRightPinchPos;
     if (gestureState.currentGesture === 'DRAWING' && drawPinchPos) {
-      this.drawDrawCursor(drawPinchPos, config.pen.thickness, config.pen.color);
+      const pos = config.mirrorOutput ? drawPinchPos : { x: 1 - drawPinchPos.x, y: drawPinchPos.y };
+      this.drawDrawCursor(pos, config.pen.thickness, config.pen.color);
     }
   }
 
-  private drawVideo(isWebcamOnly: boolean = false): void {
+  private drawVideo(isWebcamOnly: boolean = false, mirror: boolean = true): void {
     const { ctx, canvas, videoElement } = this;
 
     if (videoElement.readyState < 2) return;
 
     ctx.save();
-    // Mirror the video horizontally
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    
+    if (mirror) {
+      // Mirror the video horizontally (natural self-view)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
 
     // Draw video scaled to fit canvas
     // Full opacity for webcam-only mode, semi-transparent for whiteboard mode
@@ -349,7 +354,7 @@ export class Renderer {
     // Draw hand landmarks
     if (config.debug.showLandmarks) {
       for (const hand of hands) {
-        this.drawHandLandmarks(hand);
+        this.drawHandLandmarks(hand, config.mirrorOutput);
       }
     }
 
@@ -385,7 +390,7 @@ export class Renderer {
     ctx.restore();
   }
 
-  private drawHandLandmarks(hand: Hand): void {
+  private drawHandLandmarks(hand: Hand, mirror: boolean = true): void {
     const { ctx, canvas } = this;
     const landmarks = hand.landmarks;
 
@@ -434,9 +439,11 @@ export class Renderer {
     for (const [start, end] of connections) {
       const p1 = landmarks[start];
       const p2 = landmarks[end];
+      const x1 = mirror ? p1.x : (1 - p1.x);
+      const x2 = mirror ? p2.x : (1 - p2.x);
       ctx.beginPath();
-      ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
-      ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+      ctx.moveTo(x1 * canvas.width, p1.y * canvas.height);
+      ctx.lineTo(x2 * canvas.width, p2.y * canvas.height);
       ctx.stroke();
     }
 
@@ -444,7 +451,7 @@ export class Renderer {
     ctx.globalAlpha = 1;
     for (let i = 0; i < landmarks.length; i++) {
       const lm = landmarks[i];
-      const x = lm.x * canvas.width;
+      const x = mirror ? lm.x * canvas.width : (1 - lm.x) * canvas.width;
       const y = lm.y * canvas.height;
 
       // Different size for fingertips
@@ -463,11 +470,12 @@ export class Renderer {
 
     // Draw hand label
     const wrist = landmarks[LANDMARK.WRIST];
+    const wristX = mirror ? wrist.x * canvas.width : (1 - wrist.x) * canvas.width;
     ctx.fillStyle = color;
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText(
       hand.handedness,
-      wrist.x * canvas.width - 20,
+      wristX - 20,
       wrist.y * canvas.height + 30
     );
 

@@ -190,6 +190,7 @@ export type AppConfig = {
   aspectRatio: AspectRatioOption;  // Aspect ratio lock
   customAspectRatio?: { width: number; height: number };  // For custom ratio
   presentationMode: boolean;  // Hide control panel
+  mirrorOutput: boolean;       // Mirror the entire output
 };
 
 // === Default Configurations ===
@@ -234,6 +235,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   backgroundOpacity: 0.9,
   aspectRatio: 'none',
   presentationMode: false,
+  mirrorOutput: true,  // Default: mirrored (natural for self-view)
 };
 
 export const DEFAULT_CAMERA: Camera = {

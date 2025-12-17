@@ -135,6 +135,10 @@ export class UIManager {
             <input type="checkbox" id="presentation-mode" />
             <span>🎬 Presentation Mode (P)</span>
           </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="mirror-output" checked />
+            <span>🪞 Mirror Output</span>
+          </label>
         </section>
 
         <!-- Debug Controls -->
@@ -354,6 +358,12 @@ export class UIManager {
     presentationMode?.addEventListener('change', () => {
       this.config.presentationMode = presentationMode.checked;
       this.updatePresentationMode();
+    });
+
+    // Mirror output toggle
+    const mirrorOutput = this.container.querySelector('#mirror-output') as HTMLInputElement;
+    mirrorOutput?.addEventListener('change', () => {
+      this.config.mirrorOutput = mirrorOutput.checked;
     });
 
     // Keyboard shortcut for presentation mode (P key)
