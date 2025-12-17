@@ -1,4 +1,4 @@
-# 🃏 Jester
+# 🃏 jester
 
 A local-only, browser-based gesture-controlled whiteboard using hand tracking from your webcam. Perfect for presentations, remote meetings, and creative expression.
 
