@@ -5,7 +5,7 @@ A local-only, browser-based gesture-controlled whiteboard using hand tracking fr
 ![Jester](https://img.shields.io/badge/MediaPipe-Hands-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![Vite](https://img.shields.io/badge/Vite-7.0-purple) ![License](https://img.shields.io/badge/License-MIT-green)
 
 
-![https://x.com/tech/status/2001750269357383771](demo_tweet.png)
+[![Demo tweet](demo_tweet.png)](https://x.com/tech/status/2001750269357383771)
 
 ## 🎯 Use Case: Virtual Whiteboard for Video Calls
 
